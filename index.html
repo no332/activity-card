@@ -132,6 +132,11 @@ const SUPABASE_BUCKET="evidence";
 window.evidenceItems = window.evidenceItems || [];
 var evidenceItems = window.evidenceItems;
 </script>
+
+<style>
+#pdfEvidenceLinks{display:none}
+#evidencePrintPages .evopen{display:block;font-size:9px;font-weight:700;text-decoration:underline;text-align:center;margin-top:2px}
+</style>
 </head>
 <body>
 <div class="toolbar">
@@ -193,7 +198,7 @@ var evidenceItems = window.evidenceItems;
         <div id="evidenceList">لم تتم إضافة شواهد بعد.</div>
       </div>
     </div>
-    <div id="evidencePrintPages"></div>
+    <div id="pdfEvidenceLinks"></div><div id="evidencePrintPages"></div>
 
 <div class="signatures">
       <div class="sigbox">
@@ -317,6 +322,7 @@ async function uploadEvidence(item,i){
   return base+"/storage/v1/object/public/"+encodeURIComponent(SUPABASE_BUCKET)+"/"+path.split("/").map(encodeURIComponent).join("/");
 }
 async function buildEvidence(){
+  const linkBox=document.getElementById("pdfEvidenceLinks"); if(linkBox) linkBox.innerHTML="";
   const box=document.getElementById("evidencePrintPages");
   if(!box)return [];
   box.innerHTML=""; box.className="evidence-preview-grid";
@@ -335,7 +341,14 @@ async function buildEvidence(){
     else{const d=document.createElement("div");d.textContent="📄 PDF";d.style.cssText="height:70px;display:flex;align-items:center;justify-content:center;font-size:22px";a.appendChild(d);}
     const n=document.createElement("div");n.className="evname";n.textContent=item.name||("شاهد "+(i+1));a.appendChild(n);
     const o=document.createElement("div");o.className="evopen";o.textContent="فتح الشاهد "+(i+1);a.appendChild(o);
-    box.appendChild(a);anchors.push(a);
+    box.appendChild(a);
+    if(linkBox){
+      const ta=document.createElement("a");
+      ta.href=item.publicUrl; ta.dataset.pdfurl=item.publicUrl; ta.className="pdf-explicit-link";
+      ta.textContent="فتح الشاهد "+(i+1);
+      ta.style.cssText="display:block;font-size:10px;text-decoration:underline;margin:2px 0;text-align:right";
+      linkBox.appendChild(ta);
+    }anchors.push(a);
   }
   return anchors;
 }
@@ -345,7 +358,7 @@ async function makePDF(){
   const btn=document.querySelector(".primary"),old=btn.textContent;
   btn.disabled=true;btn.textContent="جاري إنشاء PDF...";
   try{
-    const anchors=await buildEvidence();
+    const anchors=await buildEvidence(); const _pl=document.getElementById("pdfEvidenceLinks"); if(_pl)_pl.style.display="block";
     await new Promise(r=>setTimeout(r,200));
     const {jsPDF}=window.jspdf,el=document.getElementById("capture"),er=el.getBoundingClientRect();
     const canvas=await html2canvas(el,{scale:2,useCORS:true,backgroundColor:"#fff",logging:false,windowWidth:Math.max(el.scrollWidth,940)});
