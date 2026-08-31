@@ -1,5 +1,4 @@
 <!doctype html>
-<!-- separate-image-pdf-v4 -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
@@ -195,10 +194,8 @@ var evidenceItems = window.evidenceItems;
       <div class="evidence-title">الشواهد والمرفقات</div>
       <div class="evidence-help">ارفعي صورة الشاهد وملف الشاهد كلٌ في خانة مستقلة.</div>
       <div class="evidence-picker">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-<label style="border:1px solid #b8c8cc;border-radius:8px;padding:8px;background:#fff;text-align:center"><b>📷 رفع صورة الشاهد</b><br><input id="evidenceImage" type="file" accept="image/*" style="width:100%;margin-top:5px"></label>
-<label style="border:1px solid #b8c8cc;border-radius:8px;padding:8px;background:#fff;text-align:center"><b>📄 رفع ملف الشاهد PDF</b><br><input id="evidencePdf" type="file" accept=".pdf,application/pdf" style="width:100%;margin-top:5px"></label>
-</div>
+        <div style="margin-bottom:8px"><b>📷 صورة الشاهد:</b><br><input id="evidenceImage" type="file" accept="image/*"></div>
+        <div><b>📄 ملف الشاهد PDF:</b><br><input id="evidencePdf" type="file" accept=".pdf,application/pdf"></div>
         <div id="evidenceList">لم تتم إضافة شواهد بعد.</div>
       </div>
     </div>
@@ -413,6 +410,22 @@ async function makePDF(){
       const hh=Math.max(4,q.height*sy);
       pdf.link(x,y,w,hh,{url:a.dataset.pdfurl});
     });
+
+    // روابط PDF مستقلة وقابلة للنقر لكل شاهد
+    const urls=(evidenceItems||[]).map(x=>x.publicUrl).filter(Boolean);
+    if(urls.length){
+      const linkY=H-12;
+      const slotW=(W-16-(urls.length-1)*4)/urls.length;
+      pdf.setFontSize(8);
+      urls.forEach((u,i)=>{
+        const lx=8+i*(slotW+4);
+        pdf.setTextColor(0,0,180);
+        pdf.textWithLink("فتح الشاهد "+(i+1),lx+slotW/2,linkY,{url:u,align:"center"});
+        // مساحة نقر أكبر من النص لتسهيل الضغط على الجوال
+        pdf.link(lx,linkY-6,slotW,8,{url:u});
+      });
+      pdf.setTextColor(0,0,0);
+    }
 
     const name=(document.getElementById("programName")?.value||"بطاقة_تنفيذ_برنامج").replace(/[\\/:*?"<>|]/g,"_");
     const blob=pdf.output("blob");
