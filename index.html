@@ -1,4 +1,5 @@
 <!doctype html>
+<!-- separate-image-pdf-v4 -->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
@@ -134,7 +135,7 @@ var evidenceItems = window.evidenceItems;
 </script>
 
 <style>
-#pdfEvidenceLinks{display:none}
+#pdfEvidenceLinks{display:none;gap:6px;flex-wrap:wrap;justify-content:center;margin:4px 0}
 #evidencePrintPages .evopen{display:block;font-size:9px;font-weight:700;text-decoration:underline;text-align:center;margin-top:2px}
 </style>
 </head>
@@ -192,9 +193,12 @@ var evidenceItems = window.evidenceItems;
     
     <div class="evidence-box">
       <div class="evidence-title">الشواهد والمرفقات</div>
-      <div class="evidence-help">يمكن رفع عدة صور أو ملفات PDF. جميع الشواهد ستظهر كصفحات فعلية بعد البطاقة داخل ملف PDF النهائي.</div>
+      <div class="evidence-help">ارفعي صورة الشاهد وملف الشاهد كلٌ في خانة مستقلة.</div>
       <div class="evidence-picker">
-        <input id="evidenceFiles" type="file" accept="image/*,.pdf,application/pdf" multiple>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+<label style="border:1px solid #b8c8cc;border-radius:8px;padding:8px;background:#fff;text-align:center"><b>📷 رفع صورة الشاهد</b><br><input id="evidenceImage" type="file" accept="image/*" style="width:100%;margin-top:5px"></label>
+<label style="border:1px solid #b8c8cc;border-radius:8px;padding:8px;background:#fff;text-align:center"><b>📄 رفع ملف الشاهد PDF</b><br><input id="evidencePdf" type="file" accept=".pdf,application/pdf" style="width:100%;margin-top:5px"></label>
+</div>
         <div id="evidenceList">لم تتم إضافة شواهد بعد.</div>
       </div>
     </div>
@@ -276,8 +280,10 @@ function clearForm(){
     evidenceItems = [];
   }
 
-  const fileInput = document.getElementById("evidenceFiles");
-  if(fileInput) fileInput.value = "";
+  const imageInput = document.getElementById("evidenceImage");
+  const pdfInput = document.getElementById("evidencePdf");
+  if(imageInput) imageInput.value = "";
+  if(pdfInput) pdfInput.value = "";
 
   const list = document.getElementById("evidenceList");
   if(list) list.textContent = "لم تتم إضافة شواهد بعد.";
@@ -322,69 +328,107 @@ async function uploadEvidence(item,i){
   return base+"/storage/v1/object/public/"+encodeURIComponent(SUPABASE_BUCKET)+"/"+path.split("/").map(encodeURIComponent).join("/");
 }
 async function buildEvidence(){
-  const linkBox=document.getElementById("pdfEvidenceLinks"); if(linkBox) linkBox.innerHTML="";
+  const linkBox=document.getElementById("pdfEvidenceLinks");
   const box=document.getElementById("evidencePrintPages");
+  if(linkBox) linkBox.innerHTML="";
   if(!box)return [];
   box.innerHTML=""; box.className="evidence-preview-grid";
-  const anchors=[];
+  const linkAnchors=[];
   for(let i=0;i<(evidenceItems||[]).length;i++){
     const item=evidenceItems[i];
     if(!item.file)continue;
     if(!item.publicUrl)item.publicUrl=await uploadEvidence(item,i);
+
     let thumb=null;
     try{
       if((item.file.type||"").startsWith("image/"))thumb=await toDataURL(item.file);
       else if((item.file.type||"")==="application/pdf"||/\.pdf$/i.test(item.name||""))thumb=await pdfThumb(item.file);
     }catch(e){}
-    const a=document.createElement("a");a.href=item.publicUrl;a.dataset.pdfurl=item.publicUrl;a.className="evidence-link";a.target="_blank";
-    if(thumb){const im=document.createElement("img");im.src=thumb;a.appendChild(im);}
-    else{const d=document.createElement("div");d.textContent="📄 PDF";d.style.cssText="height:70px;display:flex;align-items:center;justify-content:center;font-size:22px";a.appendChild(d);}
-    const n=document.createElement("div");n.className="evname";n.textContent=item.name||("شاهد "+(i+1));a.appendChild(n);
-    const o=document.createElement("div");o.className="evopen";o.textContent="فتح الشاهد "+(i+1);a.appendChild(o);
-    box.appendChild(a);
+
+    const card=document.createElement("div");
+    card.className="evidence-link";
+    if(thumb){
+      const im=document.createElement("img");
+      im.src=thumb;
+      card.appendChild(im);
+    }else{
+      const d=document.createElement("div");
+      d.textContent="📄 PDF";
+      d.style.cssText="height:70px;display:flex;align-items:center;justify-content:center;font-size:22px";
+      card.appendChild(d);
+    }
+    const n=document.createElement("div");
+    n.className="evname";
+    n.textContent=item.name||("شاهد "+(i+1));
+    card.appendChild(n);
+    box.appendChild(card);
+
     if(linkBox){
       const ta=document.createElement("a");
-      ta.href=item.publicUrl; ta.dataset.pdfurl=item.publicUrl; ta.className="pdf-explicit-link";
+      ta.href=item.publicUrl;
+      ta.dataset.pdfurl=item.publicUrl;
       ta.textContent="فتح الشاهد "+(i+1);
-      ta.style.cssText="display:block;font-size:10px;text-decoration:underline;margin:2px 0;text-align:right";
+      ta.style.cssText="display:inline-block;border:1px solid #1f5666;border-radius:5px;padding:3px 7px;font-size:10px;font-weight:700;text-decoration:underline;color:#173f4c;background:#fff";
       linkBox.appendChild(ta);
-    }anchors.push(a);
+      linkAnchors.push(ta);
+    }
   }
-  return anchors;
+  return linkAnchors;
 }
 
 async function makePDF(){
   save();
   const btn=document.querySelector(".primary"),old=btn.textContent;
   btn.disabled=true;btn.textContent="جاري إنشاء PDF...";
+  let _pl=null;
   try{
-    const anchors=await buildEvidence(); const _pl=document.getElementById("pdfEvidenceLinks"); if(_pl)_pl.style.display="block";
-    await new Promise(r=>setTimeout(r,200));
-    const {jsPDF}=window.jspdf,el=document.getElementById("capture"),er=el.getBoundingClientRect();
-    const canvas=await html2canvas(el,{scale:2,useCORS:true,backgroundColor:"#fff",logging:false,windowWidth:Math.max(el.scrollWidth,940)});
+    const anchors=await buildEvidence();
+    _pl=document.getElementById("pdfEvidenceLinks");
+    if(_pl)_pl.style.display="flex";
+
+    await new Promise(r=>setTimeout(r,250));
+
+    const {jsPDF}=window.jspdf;
+    const el=document.getElementById("capture");
+    const er=el.getBoundingClientRect();
+
+    const canvas=await html2canvas(el,{
+      scale:2,useCORS:true,backgroundColor:"#fff",logging:false,
+      windowWidth:Math.max(el.scrollWidth,940)
+    });
+
     const pdf=new jsPDF({orientation:"portrait",unit:"mm",format:"a4",compress:true});
     const W=210,H=297,m=4,maxW=W-2*m,maxH=H-2*m;
-    const r=Math.min(maxW/canvas.width,maxH/canvas.height),iw=canvas.width*r,ih=canvas.height*r,x0=(W-iw)/2,y0=(H-ih)/2;
+    const r=Math.min(maxW/canvas.width,maxH/canvas.height);
+    const iw=canvas.width*r,ih=canvas.height*r,x0=(W-iw)/2,y0=(H-ih)/2;
+
     pdf.addImage(canvas.toDataURL("image/jpeg",.93),"JPEG",x0,y0,iw,ih,undefined,"FAST");
+
     const sx=iw/er.width,sy=ih/er.height;
     anchors.forEach((a,i)=>{
       const q=a.getBoundingClientRect();
-      const px=x0+(q.left-er.left)*sx;
-      const py=y0+(q.top-er.top)*sy;
-      const pw=q.width*sx;
-      const ph=q.height*sy;
-      // Each card gets its own smaller clickable area plus an explicit text link.
-      pdf.link(px+1,py+1,Math.max(1,pw-2),Math.max(1,ph-2),{url:a.dataset.pdfurl});
-      pdf.setFontSize(6.5);
-      const label="فتح الشاهد "+(i+1);
-      pdf.textWithLink(label,px+pw/2,py+ph-2,{url:a.dataset.pdfurl,align:"center"});
+      const x=x0+(q.left-er.left)*sx;
+      const y=y0+(q.top-er.top)*sy;
+      const w=Math.max(8,q.width*sx);
+      const hh=Math.max(4,q.height*sy);
+      pdf.link(x,y,w,hh,{url:a.dataset.pdfurl});
     });
+
     const name=(document.getElementById("programName")?.value||"بطاقة_تنفيذ_برنامج").replace(/[\\/:*?"<>|]/g,"_");
-    const blob=pdf.output("blob"),url=URL.createObjectURL(blob),a=document.createElement("a");
-    a.href=url;a.download=name+".pdf";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),120000);
-  }catch(e){alert(e.message||"حدث خطأ");}
-  finally{btn.disabled=false;btn.textContent=old;}
+    const blob=pdf.output("blob");
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    a.href=url;a.download=name+".pdf";
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),120000);
+  }catch(e){
+    alert(e.message||"حدث خطأ");
+  }finally{
+    if(_pl)_pl.style.display="none";
+    btn.disabled=false;btn.textContent=old;
+  }
 }
+
 function formatSize(bytes){
   if(bytes < 1024) return bytes + " B";
   if(bytes < 1024*1024) return (bytes/1024).toFixed(1) + " KB";
@@ -423,18 +467,24 @@ function renderEvidence(){
   });
 }
 
-document.getElementById("evidenceFiles").addEventListener("change", e=>{
-  evidenceItems.forEach(x=>URL.revokeObjectURL(x.url));
-  window.evidenceItems = evidenceItems = Array.from(e.target.files).map(f=>({
-    name:f.name,size:f.size,type:f.type,url:URL.createObjectURL(f),file:f
-  }));
+function setEvidenceSlot(kind, file){
+  const old = evidenceItems.find(x=>x.kind===kind);
+  if(old && old.url) URL.revokeObjectURL(old.url);
+  evidenceItems = evidenceItems.filter(x=>x.kind!==kind);
+  if(file){
+    evidenceItems.push({kind,name:file.name,size:file.size,type:file.type,url:URL.createObjectURL(file),file});
+  }
+  evidenceItems.sort((a,b)=>(a.kind==='image'?0:1)-(b.kind==='image'?0:1));
+  window.evidenceItems = evidenceItems;
   renderEvidence();
-});
+}
+
+document.getElementById("evidenceImage").addEventListener("change", e=>setEvidenceSlot('image', e.target.files[0]));
+document.getElementById("evidencePdf").addEventListener("change", e=>setEvidenceSlot('pdf', e.target.files[0]));
 
 document.addEventListener("input",save);
 document.addEventListener("change",save);
 load();
-  document.getElementById("evidence").multiple = true;
 </script>
 </body>
 </html>
