@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>نجوم القراءة</title>
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: Tahoma, Arial, sans-serif;
+  direction: rtl;
+  color: #3f3560;
+  background: linear-gradient(135deg, #fff8d8, #eee7ff, #e5f8ff);
+}
+
+header {
+  text-align: center;
+  padding: 28px 15px;
+  color: white;
+  background: linear-gradient(135deg, #7047c8, #a675e8);
+  box-shadow: 0 5px 15px #0002;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 38px;
+}
+
+header p {
+  margin: 10px 0 0;
+  font-size: 18px;
+}
+
+.container {
+  max-width: 900px;
+  margin: auto;
+  padding: 20px;
+}
+
+.add-box {
+  background: white;
+  padding: 16px;
+  border-radius: 20px;
+  display: flex;
+  gap: 10px;
+  box-shadow: 0 5px 18px #0001;
+}
+
+.add-box input {
+  flex: 1;
+  min-width: 0;
+  padding: 14px;
+  border: 2px solid #ded4f3;
+  border-radius: 12px;
+  font-size: 17px;
+}
+
+.add-btn {
+  border: 0;
+  border-radius: 12px;
+  padding: 12px 18px;
+  background: #20a875;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.backup-box {
+  margin: 15px 0;
+  display: flex;
+  gap: 10px;
+}
+
+.backup-btn, .restore-btn {
+  flex: 1;
+  padding: 12px;
+  border: 0;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: bold;
+}
+
+.backup-btn {
+  background: #e8f7ef;
+  color: #168457;
+}
+
+.restore-btn {
+  background: #eee7ff;
+  color: #6541b4;
+}
+
+.goal {
+  margin: 18px 0;
+  padding: 13px;
+  text-align: center;
+  border-radius: 15px;
+  background: #fff2b7;
+  color: #946000;
+  font-weight: bold;
+}
+
+.students {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.student-card {
+  background: white;
+  border-radius: 22px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 7px 20px #5d3ca51c;
+}
+
+.student-name {
+  font-size: 25px;
+  font-weight: bold;
+  color: #6843b7;
+}
+
+.star-count {
+  font-size: 42px;
+  font-weight: bold;
+  color: #f39b00;
+  margin: 10px 0;
+}
+
+.stars {
+  min-height: 45px;
+  font-size: 27px;
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+.star-btn {
+  width: 100%;
+  border: 0;
+  padding: 15px;
+  border-radius: 15px;
+  color: white;
+  background: linear-gradient(135deg, #ffc107, #f28c00);
+  font-size: 19px;
+  font-weight: bold;
+  box-shadow: 0 4px 10px #e18b0040;
+}
+
+.star-btn:active { transform: scale(.95); }
+
+.delete-btn {
+  width: 100%;
+  margin-top: 12px;
+  padding: 13px;
+  border: none;
+  border-radius: 15px;
+  background: #ffe5e5;
+  color: #c62828;
+  font-size: 17px;
+  font-weight: bold;
+}
+
+.level {
+  margin-top: 12px;
+  padding: 9px;
+  border-radius: 12px;
+  background: #f2ecff;
+  color: #6541b4;
+  font-weight: bold;
+}
+
+.champion {
+  border: 3px solid #ffc107;
+  background: linear-gradient(145deg, white, #fff6c7);
+}
+
+.celebration {
+  display: none;
+  position: fixed;
+  z-index: 999;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 85%;
+  max-width: 400px;
+  padding: 25px;
+  text-align: center;
+  border-radius: 25px;
+  color: white;
+  background: #7047c8;
+  box-shadow: 0 10px 40px #0005;
+  font-size: 25px;
+  font-weight: bold;
+}
+
+.celebration.show {
+  display: block;
+  animation: pop .5s;
+}
+
+.celebration-star { font-size: 70px; }
+
+@keyframes pop {
+  0% { transform: translate(-50%, -50%) scale(.4); }
+  70% { transform: translate(-50%, -50%) scale(1.1); }
+  100% { transform: translate(-50%, -50%) scale(1); }
+}
+
+footer {
+  text-align: center;
+  padding: 25px;
+  color: #786d8c;
+  font-weight: bold;
+}
+
+@media (max-width: 550px) {
+  .add-box, .backup-box { flex-direction: column; }
+  header h1 { font-size: 31px; }
+  .students { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>⭐ نجوم القراءة ⭐</h1>
+  <p>أقرأ بطلاقة ✨ أتألق ✨ وأجمع النجوم</p>
+</header>
+
+<main class="container">
+
+<section class="add-box">
+  <input id="studentName" type="text"
+         placeholder="اكتبي اسم الطالب هنا"
+         autocomplete="off">
+
+  <button onclick="addStudent()" class="add-btn">
+    ➕ إضافة الطالب
+  </button>
+</section>
+
+<section class="backup-box">
+  <button class="backup-btn" onclick="exportData()">
+    💾 حفظ نسخة احتياطية
+  </button>
+
+  <button class="restore-btn"
+    onclick="document.getElementById('restoreFile').click()">
+    📂 استعادة النسخة
+  </button>
+
+  <input id="restoreFile" type="file"
+         accept=".json" hidden
+         onchange="importData(event)">
+</section>
+
+<section class="goal">
+  🏆 اجمع 20 نجمة لتصبح بطل القراءة!
+</section>
+
+<div id="students" class="students"></div>
+
+</main>
+
+<div id="celebration" class="celebration">
+  <div class="celebration-star">⭐</div>
+  <div id="celebrationText"></div>
+</div>
+
+<footer>
+  🌟 كل قراءة متميزة تستحق نجمة 🌟
+</footer>
+
+<script>
+const KEY = "نجوم_القراءة";
+let students = JSON.parse(localStorage.getItem(KEY)) || [];
+
+function save() {
+  localStorage.setItem(KEY, JSON.stringify(students));
+}
+
+function addStudent() {
+  const input = document.getElementById("studentName");
+  const name = input.value.trim();
+
+  if (!name) {
+    alert("اكتبي اسم الطالب أولاً 🌷");
+    return;
+  }
+
+  students.push({
+    id: Date.now(),
+    name: name,
+    stars: 0
+  });
+
+  save();
+  input.value = "";
+  render();
+}
+
+function addStar(id) {
+  const student = students.find(s => s.id === id);
+  if (!student) return;
+
+  student.stars++;
+  save();
+  render();
+  celebrate(student);
+}
+
+function getLevel(stars) {
+  if (stars >= 20) return "🏆 بطل القراءة";
+  if (stars >= 15) return "👑 قارئ متميز";
+  if (stars >= 10) return "🌟 قارئ متألق";
+  if (stars >= 5) return "📚 قارئ مجتهد";
+  return "🌱 قارئ واعد";
+}
+
+function makeStars(number) {
+  if (number === 0) return "✨ بانتظار أول نجمة";
+
+  let result = "";
+  const shown = Math.min(number, 20);
+
+  for (let i = 0; i < shown; i++) {
+    result += "⭐";
+  }
+
+  if (number > 20) {
+    result += " +" + (number - 20);
+  }
+
+  return result;
+}
+
+function render() {
+  const area = document.getElementById("students");
+  area.innerHTML = "";
+
+  students.forEach(student => {
+    const card = document.createElement("div");
+    card.className =
+      "student-card" +
+      (student.stars >= 20 ? " champion" : "");
+
+    const name = document.createElement("div");
+    name.className = "student-name";
+    name.textContent = student.name;
+
+    const count = document.createElement("div");
+    count.className = "star-count";
+    count.textContent = student.stars + " ⭐";
+
+    const stars = document.createElement("div");
+    stars.className = "stars";
+    stars.textContent = makeStars(student.stars);
+
+    const button = document.createElement("button");
+    button.className = "star-btn";
+    button.textContent = "⭐ أضف نجمة";
+    button.onclick = () => addStar(student.id);
+
+    const deleteButton = document.createElement("button");
+    deleteButton.className = "delete-btn";
+    deleteButton.textContent = "🗑️ حذف الطالب";
+    deleteButton.onclick = () => deleteStudent(student.id);
+
+    const level = document.createElement("div");
+    level.className = "level";
+    level.textContent = getLevel(student.stars);
+
+    card.appendChild(name);
+    card.appendChild(count);
+    card.appendChild(stars);
+    card.appendChild(button);
+    card.appendChild(deleteButton);
+    card.appendChild(level);
+
+    area.appendChild(card);
+  });
+}
+
+function celebrate(student) {
+  const box = document.getElementById("celebration");
+  const text = document.getElementById("celebrationText");
+
+  if (student.stars >= 20) {
+    text.textContent =
+      "🏆 أحسنت يا " + student.name +
+      "! أنت بطل القراءة";
+  } else {
+    text.textContent =
+      "أحسنت يا " + student.name +
+      " 🌟 نجمة جديدة!";
+  }
+
+  box.classList.add("show");
+
+  setTimeout(() => {
+    box.classList.remove("show");
+  }, 1300);
+}
+
+function deleteStudent(id) {
+  const student = students.find(s => s.id === id);
+  if (!student) return;
+
+  const ok = confirm(
+    "هل أنتِ متأكدة من حذف " + student.name + "؟"
+  );
+
+  if (ok) {
+    students = students.filter(s => s.id !== id);
+    save();
+    render();
+  }
+}
+
+function exportData() {
+  const data = JSON.stringify(students, null, 2);
+  const blob = new Blob([data], {
+    type: "application/json"
+  });
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+
+  a.href = url;
+  a.download = "نجوم-القراءة-نسخة-احتياطية.json";
+  a.click();
+
+  setTimeout(() => {
+    URL.revokeObjectURL(url);
+  }, 1000);
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+
+  reader.onload = function(e) {
+    try {
+      const imported = JSON.parse(e.target.result);
+
+      if (!Array.isArray(imported)) {
+        throw new Error();
+      }
+
+      const ok = confirm(
+        "سيتم استبدال البيانات الحالية بالنسخة المحفوظة. هل تريدين المتابعة؟"
+      );
+
+      if (!ok) {
+        event.target.value = "";
+        return;
+      }
+
+      students = imported.map(s => ({
+        id: Number(s.id) || Date.now() + Math.random(),
+        name: String(s.name || "طالب"),
+        stars: Math.max(0, Number(s.stars) || 0)
+      }));
+
+      save();
+      render();
+
+      alert("تمت استعادة النسخة بنجاح ⭐");
+    } catch {
+      alert("تعذر قراءة ملف النسخة الاحتياطية");
+    }
+
+    event.target.value = "";
+  };
+
+  reader.readAsText(file);
+}
+
+render();
+</script>
+
+</body>
+</html>
