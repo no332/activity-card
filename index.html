@@ -80,17 +80,16 @@
     <textarea class="field mini" data-k="partnership_names" style="left:1.4%;top:67.1%;width:52.8%;height:7.2%"></textarea>
     <textarea class="field" data-k="notes" style="left:1.4%;top:74.5%;width:68.5%;height:8.4%"></textarea>
 
-    <!-- منطقة التوقيعات: مرتبة وواضحة دون تداخل -->
-    <input class="field mini" data-k="exec_name" placeholder="اكتبي اسم المعلمة" style="left:70.8%;top:85.0%;width:26.3%;height:2.2%;background:rgba(255,255,255,.72);border-radius:4px" />
-    <input class="field mini" data-k="exec_date" placeholder="التاريخ" style="left:70.8%;top:87.4%;width:26.3%;height:2.1%;background:rgba(255,255,255,.72);border-radius:4px" />
-    <canvas class="sig" id="sigExec" width="260" height="80" style="left:70.8%;top:89.8%;width:26.3%;height:3.7%;background:rgba(255,255,255,.72);border-radius:5px"></canvas>
-    <span class="sigLabel" style="left:78.2%;top:89.45%;font-size:clamp(8px,1.2vw,11px);font-weight:700">توقيع المعلمة</span>
-
-    <input class="field mini" data-k="leader_name" value="أ. أمل عظيمان" readonly style="left:2.7%;top:85.0%;width:26.3%;height:2.2%;background:rgba(255,255,255,.72);border-radius:4px" />
-    <input class="field mini" data-k="leader_date" placeholder="التاريخ" style="left:2.7%;top:87.4%;width:26.3%;height:2.1%;background:rgba(255,255,255,.72);border-radius:4px" />
-    <canvas class="sig" id="sigLeader" width="260" height="80" style="left:2.7%;top:89.8%;width:26.3%;height:3.7%;background:rgba(255,255,255,.72);border-radius:5px"></canvas>
-    <span class="sigLabel" style="left:8.5%;top:89.45%;font-size:clamp(8px,1.2vw,11px);font-weight:700">توقيع رائدة النشاط</span>
-    <div style="position:absolute;left:0;right:0;bottom:.12%;text-align:center;font-size:clamp(8px,1.25vw,11px);color:#174b59;font-weight:700;direction:rtl;background:rgba(255,255,255,.68);padding:1px 0">تصميم البطاقة الإلكترونية. أ. نورة الأحمري</div>
+    <!-- تذييل مبسط حسب الطلب -->
+    <div id="footerClean" style="position:absolute;left:1.6%;right:1.6%;top:83.2%;height:15.4%;background:#fff;z-index:8;border-top:1px solid #2b6574;display:flex;align-items:center;justify-content:center;gap:8%;padding:0 4%;box-sizing:border-box;direction:rtl;font-weight:700;color:#173f4c;font-size:clamp(10px,1.6vw,15px)">
+      <div style="display:flex;align-items:center;gap:6px;min-width:48%;justify-content:center;white-space:nowrap">
+        <span>تنفيذ المعلمة :</span>
+        <input id="execNameInput" data-k="exec_name" placeholder="اكتبي الاسم" style="width:48%;min-width:120px;border:0;border-bottom:1.5px solid #365d68;background:transparent;text-align:center;font:inherit;color:#173f4c;outline:none;padding:2px 4px" />
+        <span id="execNamePrint" style="display:none;min-width:120px;border-bottom:1.5px solid #365d68;text-align:center;padding:2px 4px"></span>
+      </div>
+      <div style="min-width:40%;text-align:center;white-space:nowrap">رائدة النشاط: أ. أمل عظيمان</div>
+      <div style="position:absolute;bottom:5px;left:0;right:0;text-align:center;font-size:clamp(8px,1.15vw,11px);font-weight:600;color:#173f4c;white-space:nowrap">تصميم البطاقة الإلكترونية. أ. نورة الأحمري</div>
+    </div>
   </div>
 
   <div class="attachments">
@@ -130,27 +129,22 @@ function setupSignature(canvas){
   canvas.addEventListener('pointerup',()=>down=false); canvas.addEventListener('pointercancel',()=>down=false);
   canvas._clear=()=>ctx.clearRect(0,0,canvas.width,canvas.height);
 }
-setupSignature(document.getElementById('sigExec')); setupSignature(document.getElementById('sigLeader'));
 
 function collect(){
   const data={}; document.querySelectorAll('[data-k]').forEach(el=>data[el.dataset.k]=el.value);
   data.icon=(document.querySelector('input[name="icon"]:checked')||{}).value||'';
-  data.sigExec=document.getElementById('sigExec').toDataURL('image/png');
-  data.sigLeader=document.getElementById('sigLeader').toDataURL('image/png');
   return data;
 }
 function restore(data){
   if(!data)return; document.querySelectorAll('[data-k]').forEach(el=>{if(data[el.dataset.k]!=null)el.value=data[el.dataset.k]});
   if(data.icon){const r=[...document.querySelectorAll('input[name="icon"]')].find(x=>x.value===data.icon); if(r)r.checked=true}
-  function drawSaved(id,url){if(!url)return;const c=document.getElementById(id),ctx=c.getContext('2d'),im=new Image();im.onload=()=>ctx.drawImage(im,0,0,c.width,c.height);im.src=url}
-  drawSaved('sigExec',data.sigExec); drawSaved('sigLeader',data.sigLeader);
 }
-document.getElementById('saveBtn').onclick=()=>{localStorage.setItem('activityCard1448',JSON.stringify(collect()));setStatus('تم حفظ البيانات والتوقيع على هذا الجهاز. المرفقات لا تُحفظ محليًا.')};
+document.getElementById('saveBtn').onclick=()=>{localStorage.setItem('activityCard1448',JSON.stringify(collect()));setStatus('تم حفظ البيانات على هذا الجهاز. المرفقات لا تُحفظ محليًا.')};
 try{restore(JSON.parse(localStorage.getItem('activityCard1448')||'null'))}catch(e){}
 document.getElementById('clearBtn').onclick=()=>{
-  if(!confirm('مسح جميع البيانات والتوقيعات والمرفقات؟'))return;
-  document.querySelectorAll('[data-k]').forEach(el=>{if(el.dataset.k!=='leader_name')el.value=''}); document.querySelector('[data-k="leader_name"]').value='أ. أمل عظيمان'; document.querySelectorAll('input[name="icon"]').forEach(x=>x.checked=false);
-  document.getElementById('sigExec')._clear(); document.getElementById('sigLeader')._clear(); files=[]; renderFiles(); localStorage.removeItem('activityCard1448'); setStatus('تم المسح.');
+  if(!confirm('مسح جميع البيانات والمرفقات؟'))return;
+  document.querySelectorAll('[data-k]').forEach(el=>{el.value=''}); document.querySelectorAll('input[name="icon"]').forEach(x=>x.checked=false);
+  files=[]; renderFiles(); localStorage.removeItem('activityCard1448'); setStatus('تم المسح.');
 };
 
 async function imgFileToPage(pdfDoc,file){
@@ -165,7 +159,11 @@ async function exportPDF(){
   if(!window.html2canvas||!window.PDFLib){alert('يلزم اتصال بالإنترنت أول مرة لتحميل مكتبة التصدير.');return}
   setStatus('جاري إنشاء ملف PDF...'); document.activeElement?.blur();
   const card=document.getElementById('card');
+  const execInput=document.getElementById('execNameInput');
+  const execPrint=document.getElementById('execNamePrint');
+  execPrint.textContent=execInput.value||''; execInput.style.display='none'; execPrint.style.display='inline-block';
   const canvas=await html2canvas(card,{scale:2,useCORS:true,backgroundColor:'#ffffff',logging:false});
+  execInput.style.display='inline-block'; execPrint.style.display='none';
   const pngBytes=await fetch(canvas.toDataURL('image/png')).then(r=>r.arrayBuffer());
   const {PDFDocument}=PDFLib; const pdfDoc=await PDFDocument.create(); const p=pdfDoc.addPage([595.28,841.89]);
   const img=await pdfDoc.embedPng(pngBytes); p.drawImage(img,{x:0,y:0,width:p.getWidth(),height:p.getHeight()});
