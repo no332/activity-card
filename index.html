@@ -14,8 +14,6 @@
   button,.fileBtn{border:0;border-radius:10px;padding:10px 14px;font-size:15px;cursor:pointer;background:var(--accent);color:white;box-shadow:0 1px 4px #0002}
   button.secondary,.fileBtn.secondary{background:#536c75}
   button.danger{background:#9b3f3f}
-  #sharePdfBtn{background:#1976d2}
-  #sharePdfBtn[hidden]{display:none}
   #filePicker{display:none}
   .status{width:100%;text-align:center;font-size:13px;color:#365;min-height:18px}
   .wrap{max-width:920px;margin:14px auto 40px;padding:0 10px}
@@ -44,8 +42,7 @@
 <div class="toolbar" id="toolbar">
   <label class="fileBtn" for="filePicker">📎 إضافة صور أو ملفات PDF</label>
   <input id="filePicker" type="file" accept="image/*,application/pdf,.pdf" multiple />
-  <button id="exportBtn">⬇️ تصدير PDF</button>
-  <button id="sharePdfBtn" hidden>📤 مشاركة ملف PDF</button>
+  <button id="exportBtn">⬇️ حفظ PDF على الجهاز</button>
   <button class="secondary" id="saveBtn">💾 حفظ البيانات على الجهاز</button>
   <button class="danger" id="clearBtn">🗑️ مسح</button>
   <div class="status" id="status"></div>
@@ -158,44 +155,17 @@ async function imgFileToPage(pdfDoc,file){
   page.drawImage(img,{x:(pw-w)/2,y:(ph-h)/2,width:w,height:h});
 }
 
-let lastPdfFile = null;
-
-function downloadPdfFile(file){
-  const url = URL.createObjectURL(file);
+function downloadPdfBlob(bytes,fileName){
+  const blob = new Blob([bytes],{type:'application/pdf'});
+  const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = file.name;
+  a.download = fileName;
+  a.style.display='none';
   document.body.appendChild(a);
   a.click();
   a.remove();
   setTimeout(()=>URL.revokeObjectURL(url),120000);
-}
-
-async function shareGeneratedPdf(){
-  if(!lastPdfFile){
-    alert('أنشئي ملف PDF أولاً.');
-    return;
-  }
-  try{
-    if(navigator.share && (!navigator.canShare || navigator.canShare({files:[lastPdfFile]}))){
-      await navigator.share({
-        files:[lastPdfFile],
-        title:'بطاقة تنفيذ برنامج نشاط طلابي'
-      });
-      setStatus('تم فتح المشاركة كملف PDF فعلي. اختاري واتساب أو البريد أو أي تطبيق.');
-    }else{
-      downloadPdfFile(lastPdfFile);
-      setStatus('المشاركة المباشرة غير متاحة في هذا المتصفح؛ تم تنزيل ملف PDF إلى الجهاز.');
-    }
-  }catch(err){
-    if(err && err.name === 'AbortError'){
-      setStatus('تم إلغاء المشاركة.');
-    }else{
-      console.warn(err);
-      downloadPdfFile(lastPdfFile);
-      setStatus('تعذرت المشاركة المباشرة؛ تم تنزيل ملف PDF إلى الجهاز.');
-    }
-  }
 }
 
 async function exportPDF(){
@@ -227,21 +197,10 @@ async function exportPDF(){
 
   const out=await pdfDoc.save();
   const fileName='بطاقة_تنفيذ_برنامج_نشاط_طلابي.pdf';
-  lastPdfFile=new File([out],fileName,{type:'application/pdf',lastModified:Date.now()});
-
-  const shareBtn=document.getElementById('sharePdfBtn');
-  const canShareFile = !!(navigator.share && (!navigator.canShare || navigator.canShare({files:[lastPdfFile]})));
-  shareBtn.hidden = !canShareFile;
-
-  if(canShareFile){
-    setStatus('تم إنشاء ملف PDF. اضغطي «📤 مشاركة ملف PDF» لإرساله كمرفق وليس كرابط.');
-  }else{
-    downloadPdfFile(lastPdfFile);
-    setStatus('تم إنشاء وتنزيل ملف PDF. أرسلي الملف من تطبيق «الملفات».');
-  }
+  downloadPdfBlob(out,fileName);
+  setStatus('تم إنشاء ملف PDF وتنزيله. افتحيه من «الملفات» ثم شاركي الملف نفسه إلى واتساب.');
 }
 document.getElementById('exportBtn').onclick=exportPDF;
-document.getElementById('sharePdfBtn').onclick=shareGeneratedPdf;
 renderFiles();
 </script>
 </body>
