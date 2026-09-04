@@ -42,7 +42,7 @@
 <div class="toolbar" id="toolbar">
   <label class="fileBtn" for="filePicker">📎 إضافة صور أو ملفات PDF</label>
   <input id="filePicker" type="file" accept="image/*,application/pdf,.pdf" multiple />
-  <button id="exportBtn">⬇️ حفظ PDF على الجهاز</button>
+  <button id="exportBtn">⬇️ تنزيل PDF جديد</button>
   <button class="secondary" id="saveBtn">💾 حفظ البيانات على الجهاز</button>
   <button class="danger" id="clearBtn">🗑️ مسح</button>
   <div class="status" id="status"></div>
@@ -195,7 +195,7 @@ async function exportPDF(){
     }
   }
 
-  const out=await pdfDoc.save();
+  const out=await pdfDoc.save(window.__activityCardUniquePdfName());
   const fileName='بطاقة_تنفيذ_برنامج_نشاط_طلابي.pdf';
   downloadPdfBlob(out,fileName);
   setStatus('تم إنشاء ملف PDF وتنزيله. افتحيه من «الملفات» ثم شاركي الملف نفسه إلى واتساب.');
@@ -203,5 +203,17 @@ async function exportPDF(){
 document.getElementById('exportBtn').onclick=exportPDF;
 renderFiles();
 </script>
+
+<script>
+(function () {
+  window.__activityCardUniquePdfName = function () {
+    const d = new Date();
+    const p = n => String(n).padStart(2,'0');
+    return `بطاقة_النشاط_${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}_${p(d.getHours())}-${p(d.getMinutes())}-${p(d.getSeconds())}.pdf`;
+  };
+  // This version intentionally does not use navigator.share.
+})();
+</script>
+
 </body>
 </html>
